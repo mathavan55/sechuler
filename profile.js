@@ -1,87 +1,121 @@
-// backend/routes/profile.js
-const express = require('express');
-const authMiddleware = require('../middleware/authMiddleware');
-const db = require('../config/db');
+// js/profile.js
+const API_URL = 'http://localhost:3000/api';
 
-const router = express.Router();
+// Check authentication
+const token = localStorage.getItem('token');
+if (!token) {
+    window.location.href = 'index.html';
+}
 
-// Get profile
-router.get('/', authMiddleware, async (req, res) => {
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+});
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Load profile data
+async function loadProfile() {
     try {
-        const [users] = await db.query(
-            'SELECT id, username, email, full_name, avatar, created_at FROM users WHERE id = ?',
-            [req.userId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'User not found' 
+        const response = await fetch(`${API_URL}/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const profile = data.profile;
+            
+            // Update nav
+            document.getElementById('navUsername').textContent = profile.full_name || profile.username;
+            
+            // Update profile card
+            document.getElementById('profileName').textContent = profile.full_name || profile.username;
+            document.getElementById('profileEmail').textContent = '@' + profile.username;
+            
+            const createdDate = new Date(profile.created_at);
+            document.getElementById('memberSince').textContent = createdDate.toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
             });
+            
+            // Update form
+            document.getElementById('fullName').value = profile.full_name || '';
+            document.getElementById('email').value = profile.email || '';
+            document.getElementById('username').value = profile.username;
+            
+            // Update stats
+            const stats = profile.stats || {};
+            const total = stats.total_tasks || 0;
+            const completed = stats.completed_tasks || 0;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('completionRate').textContent = `${rate}%`;
         }
-
-        // Get stats
-        const [stats] = await db.query(
-            `SELECT 
-                COUNT(DISTINCT t.id) as total_tasks,
-                SUM(CASE WHEN t.is_completed THEN 1 ELSE 0 END) as completed_tasks
-            FROM tasks t
-            WHERE t.user_id = ?`,
-            [req.userId]
-        );
-
-        res.json({
-            success: true,
-            profile: {
-                ...users[0],
-                stats: stats[0]
-            }
-        });
     } catch (error) {
-        console.error('Get profile error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to get profile' 
-        });
+        showToast('Failed to load profile', 'error');
     }
-});
+}
 
-// Update profile
-router.put('/', authMiddleware, async (req, res) => {
+// Handle profile form submission
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    
     try {
-        const { fullName, email, avatar } = req.body;
-
-        // Check if email is taken by another user
-        if (email) {
-            const [existingUsers] = await db.query(
-                'SELECT id FROM users WHERE email = ? AND id != ?',
-                [email, req.userId]
-            );
-
-            if (existingUsers.length > 0) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Email already in use' 
-                });
-            }
+        const response = await fetch(`${API_URL}/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ fullName, email })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Profile updated successfully');
+            
+            // Update local storage
+            const updatedUser = { ...user, fullName, email };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            loadProfile();
+        } else {
+            showToast(data.message, 'error');
         }
-
-        await db.query(
-            'UPDATE users SET full_name = ?, email = ?, avatar = ? WHERE id = ?',
-            [fullName, email, avatar, req.userId]
-        );
-
-        res.json({ 
-            success: true, 
-            message: 'Profile updated successfully' 
-        });
     } catch (error) {
-        console.error('Update profile error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to update profile' 
-        });
+        showToast('Failed to update profile', 'error');
     }
 });
 
-module.exports = router;
+// Handle avatar change (placeholder - would need file upload implementation)
+function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (file) {
+        showToast('Avatar upload coming soon!', 'warning');
+    }
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}

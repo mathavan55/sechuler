@@ -1,164 +1,121 @@
-// backend/routes/auth.js
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const authMiddleware = require('../middleware/authMiddleware');
-const db = require('../config/db');
+// js/auth.js
+const API_URL = 'http://localhost:3000/api';
 
-const router = express.Router();
+// Check if user is logged in
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (token && (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/'))) {
+        window.location.href = 'scheduler.html';
+    }
+    if (!token && !window.location.pathname.includes('index.html') && !window.location.pathname.includes('register.html')) {
+        window.location.href = 'index.html';
+    }
+}
 
-// Register
-router.post('/register', async (req, res) => {
-    try {
-        const { username, email, password, fullName } = req.body;
+// Initialize auth check
+checkAuth();
 
-        if (!username || !email || !password) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'All fields are required' 
+// Toggle password visibility
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Handle login form
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-        }
-
-        // Check if user exists
-        const [existingUsers] = await db.query(
-            'SELECT id FROM users WHERE username = ? OR email = ?',
-            [username, email]
-        );
-
-        if (existingUsers.length > 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Username or email already exists' 
-            });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Insert user
-        const [result] = await db.query(
-            'INSERT INTO users (username, email, password, full_name) VALUES (?, ?, ?, ?)',
-            [username, email, hashedPassword, fullName || username]
-        );
-
-        // Generate token
-        const token = jwt.sign(
-            { userId: result.insertId }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '7d' }
-        );
-
-        res.status(201).json({
-            success: true,
-            message: 'User registered successfully',
-            token,
-            user: {
-                id: result.insertId,
-                username,
-                email,
-                fullName: fullName || username
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showToast('Login successful! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'scheduler.html';
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
             }
-        });
-    } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Registration failed' 
-        });
-    }
-});
-
-// Login
-router.post('/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        if (!username || !password) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Username and password are required' 
-            });
+        } catch (error) {
+            showToast('Login failed. Please try again.', 'error');
         }
+    });
+}
 
-        // Find user
-        const [users] = await db.query(
-            'SELECT * FROM users WHERE username = ? OR email = ?',
-            [username, username]
-        );
-
-        if (users.length === 0) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Invalid credentials' 
-            });
+// Handle register form
+const registerForm = document.getElementById('registerForm');
+if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const fullName = document.getElementById('fullName').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (password !== confirmPassword) {
+            showToast('Passwords do not match', 'error');
+            return;
         }
-
-        const user = users[0];
-
-        // Compare password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-
-        if (!isValidPassword) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Invalid credentials' 
-            });
+        
+        if (password.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
         }
-
-        // Generate token
-        const token = jwt.sign(
-            { userId: user.id }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '7d' }
-        );
-
-        res.json({
-            success: true,
-            message: 'Login successful',
-            token,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                fullName: user.full_name,
-                avatar: user.avatar
+        
+        try {
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, fullName })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showToast('Registration successful! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'scheduler.html';
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
             }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Login failed' 
-        });
-    }
-});
-
-// Get current user
-router.get('/me', authMiddleware, async (req, res) => {
-    try {
-        const [users] = await db.query(
-            'SELECT id, username, email, full_name, avatar, created_at FROM users WHERE id = ?',
-            [req.userId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'User not found' 
-            });
+        } catch (error) {
+            showToast('Registration failed. Please try again.', 'error');
         }
+    });
+}
 
-        res.json({ 
-            success: true, 
-            user: users[0] 
-        });
-    } catch (error) {
-        console.error('Get user error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to get user' 
-        });
-    }
-});
-
-module.exports = router;
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
