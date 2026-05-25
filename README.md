@@ -153,9 +153,9 @@ The app will be running at `http://localhost:3000`.
 
 ## 👤 Author
 
-**[Your Name]**
--   **GitHub:** [your-username](https://github.com/mathavan55)
--   **LinkedIn:** [your-linkedin](https://linkedin.com/in/mathavan-m)
+**[Mathavan M]**
+-   **GitHub:** [mathavan55](https://github.com/mathavan55)
+-   **LinkedIn:** [mathavan-m](https://linkedin.com/in/mathavan-m)
 -   **Email:** mathavanab84@gamil.com
 
 ---
