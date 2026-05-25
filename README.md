@@ -1,6 +1,4 @@
-Here is the updated `README.md` for GitHub, with the Author and Reference sections included as requested.
 
-```markdown
 # TaskFlow - Smart Scheduler & Productivity Tracker
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
