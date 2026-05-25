@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler - TaskFlow</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="app-page">
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <h1>TaskFlow</h1>
+        </div>
+        <div class="nav-links">
+            <a href="scheduler.html" class="nav-link active">Schedule</a>
+            <a href="monthly.html" class="nav-link">Monthly</a>
+            <a href="media.html" class="nav-link">Media</a>
+        </div>
+        <div class="nav-profile">
+            <button class="profile-btn" onclick="window.location.href='profile.html'">
+                <div class="avatar-placeholder" id="navAvatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <span id="navUsername">User</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="scheduler-main">
+        <!-- Sidebar Stats -->
+        <aside class="sidebar-stats">
+            <div class="stat-card today-progress">
+                <h3>Today's Progress</h3>
+                <div class="progress-ring-container">
+                    <svg class="progress-ring" viewBox="0 0 120 120">
+                        <circle class="progress-ring-bg" cx="60" cy="60" r="54"/>
+                        <circle class="progress-ring-fill" id="todayProgressRing" cx="60" cy="60" r="54"/>
+                    </svg>
+                    <div class="progress-value">
+                        <span id="todayPercentage">0%</span>
+                    </div>
+                </div>
+                <p><span id="todayCompleted">0</span> of <span id="todayTotal">0</span> tasks</p>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Weekly Average</h3>
+                <div class="stat-value" id="weeklyAvg">0%</div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill" id="weeklyBar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Monthly Average</h3>
+                <div class="stat-value" id="monthlyAvg">0%</div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill" id="monthlyBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Task Section -->
+        <section class="task-section">
+            <!-- Date Navigation -->
+            <div class="date-nav">
+                <button class="date-nav-btn" onclick="changeDate(-1)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <input type="date" id="selectedDate" class="date-picker">
+                <button class="date-nav-btn" onclick="changeDate(1)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>Task Type:</label>
+                    <select id="taskTypeFilter" onchange="loadTasks()">
+                        <option value="all">All Tasks</option>
+                        <option value="limited">One-Time</option>
+                        <option value="daily">Daily</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date Range:</label>
+                    <input type="date" id="filterStartDate" onchange="loadTasks()">
+                    <span>to</span>
+                    <input type="date" id="filterEndDate" onchange="loadTasks()">
+                </div>
+            </div>
+
+            <!-- Add Task Button -->
+            <button class="btn-add-task" onclick="openTaskModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span>Add Task</span>
+            </button>
+
+            <!-- Tasks List -->
+            <div class="tasks-container" id="tasksContainer">
+                <div class="tasks-list" id="tasksList">
+                    <!-- Tasks will be rendered here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Task Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Task</h2>
+                <button class="modal-close" onclick="closeTaskModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="taskForm" class="modal-body">
+                <input type="hidden" id="taskId">
+                
+                <div class="form-group">
+                    <label for="taskTitle">Task Title</label>
+                    <input type="text" id="taskTitle" required placeholder="What do you want to accomplish?">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDescription">Description (Optional)</label>
+                    <textarea id="taskDescription" rows="3" placeholder="Add more details..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskDate">Date</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStartTime">Start Time</label>
+                        <input type="time" id="taskStartTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskEndTime">End Time</label>
+                        <input type="time" id="taskEndTime" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskType">Task Type</label>
+                    <select id="taskType" onchange="toggleRepeatDays()">
+                        <option value="limited">One-Time Task</option>
+                        <option value="daily">Daily Task</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="repeatDaysGroup" style="display: none;">
+                    <label>Repeat On</label>
+                    <div class="days-selector">
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="0">
+                            <span>Sun</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="1">
+                            <span>Mon</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="2">
+                            <span>Tue</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="3">
+                            <span>Wed</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="4">
+                            <span>Thu</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="5">
+                            <span>Fri</span>
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="repeatDays" value="6">
+                            <span>Sat</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <span id="submitBtnText">Add Task</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alarm Modal -->
+    <div class="modal-overlay" id="alarmModal">
+        <div class="modal alarm-modal">
+            <div class="alarm-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+            </div>
+            <h2>Deadline Approaching</h2>
+            <p id="alarmTaskTitle">Task name</p>
+            <p class="alarm-time">10 minutes remaining</p>
+            <button class="btn-primary" onclick="closeAlarmModal()">Got it</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    
+    <!-- Audio for alarm -->
+    <audio id="alarmSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleAAAKmO/4PzTPAAAWhdYWmZhYFlcW1hZWVpdX2JkZ2lqbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0A=" type="audio/wav">
+    </audio>
+    
+    <script src="js/scheduler.js"></script>
+</body>
+</html>

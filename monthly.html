@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Progress - TaskFlow</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="app-page">
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <h1>TaskFlow</h1>
+        </div>
+        <div class="nav-links">
+            <a href="scheduler.html" class="nav-link">Schedule</a>
+            <a href="monthly.html" class="nav-link active">Monthly</a>
+            <a href="media.html" class="nav-link">Media</a>
+        </div>
+        <div class="nav-profile">
+            <button class="profile-btn" onclick="window.location.href='profile.html'">
+                <div class="avatar-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <span id="navUsername">User</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="monthly-main">
+        <!-- Month Navigation -->
+        <div class="month-nav">
+            <button class="month-nav-btn" onclick="changeMonth(-1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>
+            <h2 id="currentMonth">January 2024</h2>
+            <button class="month-nav-btn" onclick="changeMonth(1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-cell header-cell">Sun</div>
+                <div class="calendar-cell header-cell">Mon</div>
+                <div class="calendar-cell header-cell">Tue</div>
+                <div class="calendar-cell header-cell">Wed</div>
+                <div class="calendar-cell header-cell">Thu</div>
+                <div class="calendar-cell header-cell">Fri</div>
+                <div class="calendar-cell header-cell">Sat</div>
+            </div>
+            <div class="calendar-body" id="calendarBody">
+                <!-- Calendar days will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Activity Legend -->
+        <div class="activity-legend">
+            <div class="legend-item">
+                <span class="legend-color no-data"></span>
+                <span>No Data</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color low"></span>
+                <span>1-25%</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color medium"></span>
+                <span>26-50%</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color good"></span>
+                <span>51-75%</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color excellent"></span>
+                <span>76-100%</span>
+            </div>
+        </div>
+
+        <!-- Day Details Modal -->
+        <div class="modal-overlay" id="dayModal">
+            <div class="modal day-modal">
+                <div class="modal-header">
+                    <h2 id="dayModalTitle">Day Details</h2>
+                    <button class="modal-close" onclick="closeDayModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="dayModalBody">
+                    <!-- Day tasks will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    
+    <script src="js/monthly.js"></script>
+</body>
+</html>
